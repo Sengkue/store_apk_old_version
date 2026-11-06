@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>ຄັງເກັບ APK ເວີຊັນເກົ່າ</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+    <!-- ແຖບຫົວຂໍ້ດ້ານເທິງ -->
+    <header class="app-header">
+        <div class="header-top">
+            <div class="brand-row">
+                <div class="brand-logo">🛡️</div>
+                <div>
+                    <div class="brand-title">ຄັງເກັບ APK ເວີຊັນເກົ່າ</div>
+                    <div class="brand-subtitle">ຮັກສາແອັບເຊີບເວີເກົ່າ & ກູ້ຄືນເມື່ອແອັບອັບເດດເອງ</div>
+                </div>
+            </div>
+            <button class="btn-refresh" onclick="refreshAll()">
+                <span>🔄</span>
+                <span>ກວດສອບ</span>
+            </button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="statUniqueApps">0</div>
+                <div class="stat-label">ແອັບທີ່ເກັບໄວ້</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="statTotalVersions">0</div>
+                <div class="stat-label">ຈຳນວນເວີຊັນ</div>
+            </div>
+            <div class="stat-box warn">
+                <div class="stat-value" id="statAutoUpdated">0</div>
+                <div class="stat-label">ຖືກອັບເດດໃໝ່</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="statStorage">0 MB</div>
+                <div class="stat-label">ພື້ນທີ່ຄັງແອັບ</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- ແຈ້ງເຕືອນຂໍສິດຕິດຕັ້ງ APK -->
+        <div id="permissionBanner" class="alert-banner permission" style="display: none;">
+            <div class="alert-text">
+                <h4>🔓 ຕ້ອງເປີດສິດຕິດຕັ້ງແອັບກ່ອນ</h4>
+                <p>ກະລຸນາອະນຸຍາດໃຫ້ຄັງແອັບນີ້ສາມາດຕິດຕັ້ງໄຟລ໌ APK ເວີຊັນເກົ່າລົງໃນໂທລະສັບຂອງທ່ານ.</p>
+            </div>
+            <button class="alert-btn" onclick="requestInstallPerm()">ເປີດອະນຸຍາດ</button>
+        </div>
+
+        <!-- ແຈ້ງເຕືອນເມື່ອພົບແອັບໃນເຄື່ອງຖືກອັບເດດອັດຕະໂນມັດ -->
+        <div id="autoUpdateBanner" class="alert-banner autoupdate" style="display: none;">
+            <div class="alert-text">
+                <h4>⚠️ ພົບແອັບໃນເຄື່ອງຖືກອັບເດດເປັນເວີຊັນໃໝ່!</h4>
+                <p id="autoUpdateBannerDesc">ມີແອັບທີ່ທ່ານເກັບໄວ້ຖືກລະບົບອັບເດດໄປເປັນເວີຊັນໃໝ່. ທ່ານສາມາດກົດ "ກັບຄືນເວີຊັນເກົ່າ" ຢູ່ລຸ່ມນີ້ໄດ້ທັນທີ.</p>
+            </div>
+        </div>
+
+        <!-- ໜ້າທີ 1: ຄັງແອັບເກົ່າຂອງຂ້ອຍ -->
+        <section id="tab-vault" class="tab-panel active">
+            <div class="quick-actions">
+                <button class="quick-card-btn" onclick="switchTab('import')">
+                    <div class="quick-icon">📂</div>
+                    <div>
+                        <div class="quick-title">ນຳເຂົ້າໄຟລ໌ .APK</div>
+                        <div class="quick-sub">ເລືອກໄຟລ໌ຈາກໂທລະສັບ</div>
+                    </div>
+                </button>
+                <button class="quick-card-btn secondary" onclick="switchTab('backup')">
+                    <div class="quick-icon">📲</div>
+                    <div>
+                        <div class="quick-title">ດຶງຈາກແອັບໃນເຄື່ອງ</div>
+                        <div class="quick-sub">ສຳຮອງກ່ອນມັນອັບເດດ</div>
+                    </div>
+                </button>
+            </div>
+
+            <div class="search-bar">
+                <span class="search-icon">🔍</span>
+                <input
+                    type="text"
+                    id="vaultSearchInput"
+                    class="search-input"
+                    placeholder="ຄົ້ນຫາຊື່ແອັບ, ລະຫັດເວີຊັນ ຫຼື ໝາຍເຫດ..."
+                    oninput="renderVaultList()"
+                />
+            </div>
+
+            <div class="filter-pills">
+                <button class="pill active" data-filter="ALL" onclick="setVaultFilter('ALL', this)">ທັງໝົດ</button>
+                <button class="pill" data-filter="AUTO_UPDATED" onclick="setVaultFilter('AUTO_UPDATED', this)">⚠️ ຖືກອັບເດດເອງ</button>
+                <button class="pill" data-filter="MATCH" onclick="setVaultFilter('MATCH', this)">🟢 ກຳລັງໃຊ້ເວີຊັນເກົ່າ</button>
+                <button class="pill" data-filter="NOT_INSTALLED" onclick="setVaultFilter('NOT_INSTALLED', this)">🔵 ຍັງບໍ່ໄດ້ຕິດຕັ້ງ</button>
+            </div>
+
+            <div id="vaultListContainer" class="apk-list"></div>
+        </section>
+
+        <!-- ໜ້າທີ 2: ດຶງເກັບແອັບທີ່ຕິດຕັ້ງຢູ່ໃນເຄື່ອງ -->
+        <section id="tab-backup" class="tab-panel">
+            <div class="section-card">
+                <div class="section-title">📲 ດຶງເກັບແອັບຈາກໂທລະສັບເຂົ້າຄັງ</div>
+                <div class="section-desc">
+                    ຖ້າຕອນນີ້ແອັບໃນເຄື່ອງຂອງທ່ານຍັງເປັນ <b>ເວີຊັນເກົ່າ (ເຊີບເວີເກົ່າ)</b> ໃຫ້ກົດປຸ່ມ <b>"ເກັບໄວ້ໃນຄັງ"</b> ທັນທີ! ລະບົບຈະດຶງໄຟລ໌ຕິດຕັ້ງ APK ຂອງແອັບນັ້ນມາເກັບໄວ້ຢ່າງປອດໄພ ເພື່ອໃຫ້ທ່ານກັບມາລົງໃໝ່ໄດ້ສະເໝີ.
+                </div>
+
+                <div class="search-bar">
+                    <span class="search-icon">🔍</span>
+                    <input
+                        type="text"
+                        id="installedSearchInput"
+                        class="search-input"
+                        placeholder="ຄົ້ນຫາແອັບທີ່ມີຢູ່ໃນໂທລະສັບ..."
+                        oninput="renderInstalledList()"
+                    />
+                </div>
+
+                <div class="toggle-row">
+                    <span>ສະແດງແອັບລະບົບຂອງເຄື່ອງນຳ</span>
+                    <input type="checkbox" id="showSystemCheck" onchange="loadInstalledApps(true)" style="width:18px;height:18px;" />
+                </div>
+            </div>
+
+            <div id="installedListContainer" class="apk-list"></div>
+        </section>
+
+        <!-- ໜ້າທີ 3: ນຳເຂົ້າໄຟລ໌ .APK ຈາກໂທລະສັບ -->
+        <section id="tab-import" class="tab-panel">
+            <div class="section-card">
+                <div class="section-title">📂 ນຳເຂົ້າໄຟລ໌ APK ເວີຊັນເກົ່າ</div>
+                <div class="section-desc">
+                    ເລືອກໄຟລ໌ <b>.apk</b> ຈາກໂຟນເດີ <b>Download</b> ຫຼື ຄວາມຈຳໂທລະສັບຂອງທ່ານ ເພື່ອນຳມາເກັບໄວ້ໃນຄັງແອັບສ່ວນຕົວນີ້. ໄຟລ໌ທີ່ນຳເຂົ້າແລ້ວຈະບໍ່ຖືກລຶບ ແລະ ສາມາດກົດຕິດຕັ້ງໄດ້ທຸກເມື່ອໂດຍບໍ່ຕ້ອງໃຊ້ອິນເຕີເນັດ.
+                </div>
+
+                <label class="form-label">📝 ໝາຍເຫດກຳກັບເວີຊັນນີ້ (ໃສ່ ຫຼື ບໍ່ໃສ່ກໍໄດ້):</label>
+                <input
+                    type="text"
+                    id="importNoteInput"
+                    class="form-input"
+                    placeholder="ຕົວຢ່າງ: ແອັບເຊີບເວີເກົ່າ ເວີຊັນໃຊ້ດີ ຫ້າມອັບເດດ"
+                />
+
+                <button class="btn btn-primary" style="width: 100%; padding: 13px;" onclick="triggerPickApkFile()">
+                    <span>📁</span>
+                    <span>ເລືອກໄຟລ໌ .APK ຈາກໂທລະສັບ</span>
+                </button>
+            </div>
+
+            <div class="section-card">
+                <div class="section-title">💡 ຄຳແນະນຳເພີ່ມເຕີມ</div>
+                <div class="step-list">
+                    <div class="step-item">
+                        <div class="step-num">1</div>
+                        <div class="step-body">
+                            <h4>ເກັບໄດ້ຫຼາຍເວີຊັນຕໍ່ 1 ແອັບ</h4>
+                            <p>ທ່ານສາມາດເກັບແອັບດຽວກັນໄວ້ຫຼາຍເວີຊັນ (ເຊັ່ນ v1.0, v1.2, v1.5) ແລະ ເລືອກຕິດຕັ້ງເວີຊັນໃດກໍໄດ້ຕາມຕ້ອງການ.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num">2</div>
+                        <div class="step-body">
+                            <h4>ເປີດໄຟລ໌ .APK ຈາກ WhatsApp / File Manager ໂດຍກົງ</h4>
+                            <p>ເວລາທ່ານກົດເປີດໄຟລ໌ .apk ຈາກແອັບອື່ນ ທ່ານສາມາດເລືອກເປີດດ້ວຍ <b>"ຄັງເກັບ APK ເວີຊັນເກົ່າ"</b> ເພື່ອບັນທຶກເຂົ້າຄັງທັນທີ.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ໜ້າທີ 4: ວິທີບລັອກບໍ່ໃຫ້ແອັບອັບເດດເອງ -->
+        <section id="tab-guide" class="tab-panel">
+            <div class="section-card">
+                <div class="section-title">🛡️ ວິທີປ້ອງກັນບໍ່ໃຫ້ໂທລະສັບອັບເດດແອັບເອງ</div>
+                <div class="section-desc">
+                    ສາເຫດທີ່ແອັບເຊີບເວີເກົ່າໃນໂທລະສັບມັກອັບເດດເປັນເວີຊັນໃໝ່ເອງ ແມ່ນຍ້ອນ <b>Google Play Store</b> ເປີດໂໝດອັບເດດອັດຕະໂນມັດໄວ້. ກະລຸນາເຮັດຕາມ 3 ຂັ້ນຕອນລຸ່ມນີ້ເພື່ອລັອກເວີຊັນເກົ່າໄວ້ຖາວອນ:
+                </div>
+
+                <div class="step-list">
+                    <div class="step-item">
+                        <div class="step-num">1</div>
+                        <div class="step-body">
+                            <h4>ປິດອັບເດດອັດຕະໂນມັດສະເພາະແອັບ</h4>
+                            <p>ໃນໜ້າ <b>ຄັງແອັບເກົ່າ</b> ໃຫ້ກົດປຸ່ມ <b>"🛡️ ບລັອກອັບເດດ Play Store"</b> ຢູ່ກ້ອງຊື່ແອັບ -> ແລ້ວກົດຈຸດສາມຈຸດ <b>(⋮)</b> อยู່ມຸມຂວາເທິງຂອງ Play Store -> <b>ຕິ๊กອອກ (Uncheck) "ອັບເດດອັດຕະໂນມັດ (Enable auto update)"</b>.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-num">2</div>
+                        <div class="step-body">
+                            <h4>ປິດການອັບເດດອັດຕະໂນມັດທັງໝົດໃນ Play Store</h4>
+                            <p>ເປີດແອັບ <b>Play Store</b> -> ກົດຮູບໂປຣໄຟລ໌ມຸມຂວາເທິງ -> <b>ການຕັ້ງຄ່າ (Settings)</b> -> <b>ຄວາມມັກເຄືອຂ່າຍ (Network preferences)</b> -> <b>ອັບເດດແອັບອັດຕະໂນມັດ (Auto-update apps)</b> -> ເລືອກ <b>"ຢ່າອັບເດດແອັບອັດຕະໂນມັດ (Don't auto-update apps)"</b>.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-num">3</div>
+                        <div class="step-body">
+                            <h4>ຖ້າແອັບເຜີອັບເດດໄປແລ້ວ ຈະກັບຄືນເວີຊັນເກົ່າແນວໃດ?</h4>
+                            <p>ພຽງແຕ່ເປີດແອັບ <b>ຄັງເກັບ APK ເວີຊັນເກົ່າ</b> ນີ້ຂຶ້ນມາ -> ກົດປຸ່ມສີສົ້ມ <b>"🔄 ກັບຄືນໃຊ້ເວີຊັນເກົ່ານີ້"</b> -> ກົດຕົກລົງເພື່ອຖອນໂຕໃໝ່ອອກ ແລ້ວລະບົບຈະເດັ້ງໜ້າຕິດຕັ້ງເວີຊັນເກົ່າໃຫ້ທ່ານທັນທີ!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ແຖບເມນູດ້ານລຸ່ມ -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" id="nav-vault" onclick="switchTab('vault')">
+            <span class="nav-icon">🏪</span>
+            <span class="nav-label">ຄັງແອັບເກົ່າ</span>
+        </button>
+        <button class="nav-item" id="nav-backup" onclick="switchTab('backup')">
+            <span class="nav-icon">📲</span>
+            <span class="nav-label">ດຶງຈາກເຄື່ອງ</span>
+        </button>
+        <button class="nav-item" id="nav-import" onclick="switchTab('import')">
+            <span class="nav-icon">📂</span>
+            <span class="nav-label">ນຳເຂົ້າ APK</span>
+        </button>
+        <button class="nav-item" id="nav-guide" onclick="switchTab('guide')">
+            <span class="nav-icon">🛡️</span>
+            <span class="nav-label">ບລັອກອັບເດດ</span>
+        </button>
+    </nav>
+
+    <!-- Modal ຕົວຊ່ວຍກັບຄືນເວີຊັນເກົ່າ (Downgrade Assistant) -->
+    <div id="downgradeModal" class="modal-backdrop">
+        <div class="modal-box">
+            <div class="modal-title">🔄 ຕົວຊ່ວຍກັບຄືນເວີຊັນເກົ່າ</div>
+            <div class="modal-text" id="downgradeModalText"></div>
+            <div class="modal-actions">
+                <button class="btn btn-warning" id="btnStartDowngrade">
+                    🗑️ ຂັ້ນຕອນທີ 1: ຖອນເວີຊັນໃໝ່ & ຕິດຕັ້ງເວີຊັນເກົ່າອັດຕະໂນມັດ
+                </button>
+                <button class="btn btn-secondary" id="btnForceInstall">
+                    ⚡ ລອງຕິດຕັ້ງທັບໂດຍກົງ (ບໍ່ຖອນກ່ອນ)
+                </button>
+                <button class="btn btn-secondary" onclick="closeModals()">
+                    ຍົກເລີກ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal ແກ້ໄຂໝາຍເຫດ -->
+    <div id="noteModal" class="modal-backdrop">
+        <div class="modal-box">
+            <div class="modal-title">✏️ ແກ້ໄຂໝາຍເຫດຂອງເວີຊັນນີ້</div>
+            <div class="modal-text">ໃສ່ຄຳອະທິບາຍ ເຊັ່ນ "ເຊີບເວີເກົ່າ ລื่นດີ ບໍ່ອັບເດດ":</div>
+            <input type="text" id="editNoteInput" class="form-input" />
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="saveEditedNote()">💾 ບັນທຶກໝາຍເຫດ</button>
+                <button class="btn btn-secondary" onclick="closeModals()">ຍົກເລີກ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast ແຈ້ງເຕືອນ -->
+    <div id="toastBox" class="toast">
+        <span id="toastText"></span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
